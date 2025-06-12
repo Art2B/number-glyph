@@ -6,3 +6,7 @@ html {
   justify-content: center;
   height: 100%;
 }
+
+canvas {
+  border: 2px solid rgba(191, 191, 191, 0.2);
+}
