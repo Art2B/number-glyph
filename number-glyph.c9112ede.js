@@ -833,7 +833,7 @@ class Glyph {
             if (index === 0 || index === this.digitsDirections.length - 1) return;
             if (this.digitsDirections.slice(0, index).some((dd)=>{
                 return (0, _helpersDefault.default).isOppositiveDirection(direction, dd);
-            })) {
+            }) && this.digitsArray.slice(0, index).find((digit)=>digit === this.digitsArray[index + 1])) {
                 const coordinates = this.getNumberCoordinate(this.digitsArray[index]);
                 const endCoordinates = this.getNumberCoordinate(this.digitsArray[index + 1]);
                 const xOffset = direction.y !== 0 ? 10 * direction.y : 0;
