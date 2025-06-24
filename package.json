@@ -5,8 +5,8 @@
   "source": "src/index.html",
   "scripts": {
     "start": "parcel",
-    "build": "parcel build",
-    "predeploy": "parcel build --public-url https://art2b.github.io/number-glyph/",
+    "build": "parcel build  --public-url https://art2b.github.io/number-glyph/",
+    "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },
   "devDependencies": {

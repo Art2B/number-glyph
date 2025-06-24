@@ -254,7 +254,10 @@ export class Glyph {
       if (
         this.digitsDirections.slice(0, index).some((dd) => {
           return Helpers.isOppositiveDirection(direction, dd);
-        })
+        }) &&
+        this.digitsArray
+          .slice(0, index)
+          .find((digit) => digit === this.digitsArray[index + 1])
       ) {
         const coordinates = this.getNumberCoordinate(this.digitsArray[index]);
         const endCoordinates = this.getNumberCoordinate(
