@@ -15,8 +15,12 @@ if (ctx) {
     }
   );
 
+  numberInput.addEventListener("input", (e: Event) => {
+    numberInput.value = e.target.value.replace(/[^0-9]/g, "");
+  });
+
   numberInput.addEventListener("change", (e: Event) => {
-    numberGlyph.number = e.target.value;
+    numberGlyph.number = e.target.value.replace(/[^0-9]/g, "");
     numberGlyph.draw();
   });
 }
