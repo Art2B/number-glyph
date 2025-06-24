@@ -1,4 +1,9 @@
-import { ConsecutiveNumber, DirectionVector } from "./types";
+import {
+  ConsecutiveNumber,
+  Coordinates,
+  DirectionVector,
+  Vector,
+} from "./types";
 
 export function lerp(
   value: number,
@@ -12,6 +17,10 @@ export function lerp(
 
 export function splitNumberIntoDigits(n: number) {
   return Array.from(String(n), Number);
+}
+
+export function splitStringIntoDigits(n: string) {
+  return Array.from(n, Number);
 }
 
 export function isSameDirection(
@@ -64,12 +73,55 @@ export function getPerpendicularDirection(direction: DirectionVector) {
   return { x: -direction.y, y: direction.x } as DirectionVector;
 }
 
+export function getVector(coord1: Coordinates, coord2: Coordinates): Vector {
+  return {
+    x: coord2.x - coord1.x,
+    y: coord2.y - coord1.y,
+  };
+}
+
+export function getPerpendicularVector(vector: Vector): Vector {
+  return {
+    x: vector.y * -1,
+    y: vector.x,
+  };
+}
+
+export function normalizeVector(vector: { x: number; y: number }): Vector {
+  const length = Math.sqrt(vector.x ** 2 + vector.y ** 2);
+  if (length === 0) {
+    throw new Error("Cannot normalize a zero vector");
+  }
+
+  return {
+    x: vector.x / length,
+    y: vector.y / length,
+  };
+}
+
+export function getNormalizedVectorFromCoordinates(
+  coord1: Coordinates,
+  coord2: Coordinates
+): Vector {
+  return normalizeVector(getPerpendicularVector(getVector(coord1, coord2)));
+}
+
+export function areCoordinatesEqual(coord1: Coordinates, coord2: Coordinates) {
+  return coord1.x === coord2.x && coord1.y === coord2.y;
+}
+
 export default {
   lerp,
   splitNumberIntoDigits,
+  splitStringIntoDigits,
   isSameDirection,
   isOppositiveDirection,
   generateArrayWithDifferentAdjacentDigits,
   getConsecutiveNumbers,
   getPerpendicularDirection,
+  getVector,
+  getPerpendicularVector,
+  normalizeVector,
+  getNormalizedVectorFromCoordinates,
+  areCoordinatesEqual,
 };

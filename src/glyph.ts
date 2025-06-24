@@ -12,7 +12,7 @@ export class Glyph {
 
   private _height!: number;
   private _width!: number;
-  private _digit!: number;
+  private _digit!: string;
   private blockHeight!: number;
   private blockWidth!: number;
 
@@ -31,7 +31,7 @@ export class Glyph {
     helpCircleRadius: 10,
     strokeStyle: "indianred",
     lineWidth: 5,
-    sameDirectionLineLength: 20,
+    sameDirectionLineLength: 10,
     consecutiveNumberCircleRadius: 15,
     smallCircleRadius: 5,
   };
@@ -56,7 +56,7 @@ export class Glyph {
 
   set height(value: number) {
     this._height = value;
-    this.blockHeight = Math.floor(value / 3);
+    this.blockHeight = Math.floor(value / 4);
   }
 
   set width(value: number) {
@@ -72,9 +72,9 @@ export class Glyph {
     return this._width;
   }
 
-  set number(value: number) {
-    this._digit = Number(value.toString().slice(0, this.options.maxDigits));
-    this.digitsArray = Helpers.splitNumberIntoDigits(this.number);
+  set number(value: string) {
+    this._digit = value.slice(0, this.options.maxDigits);
+    this.digitsArray = Helpers.splitStringIntoDigits(this.number);
     this.digitsCoordinates = this.digitsArray.map((el) =>
       this.getNumberCoordinate(el)
     );
@@ -116,10 +116,7 @@ export class Glyph {
       this.consecutiveNumbers[0].occurence !== this.options.maxDigits - 1
     ) {
       // Draw small circle
-      const circleCoord = this.getStartCircleCoordinates(
-        this.digitsCoordinates[0],
-        this.digitsCoordinates[1]
-      );
+      const circleCoord = this.getStartCircleCoordinates();
       this.ctx.beginPath();
       this.ctx.arc(
         circleCoord.x,
@@ -164,25 +161,32 @@ export class Glyph {
         digit !== this.digitsArray[index - 1]
       ) {
         const coordinates = this.getNumberCoordinate(digit);
-        const perpendicularDirection = Helpers.getPerpendicularDirection(
-          this.digitsDirections[index]
+        const nextCoordinates = this.getNumberCoordinate(
+          this.digitsArray[index + 1]
         );
+
+        const normalizedPerpendicularVector =
+          Helpers.getNormalizedVectorFromCoordinates(
+            coordinates,
+            nextCoordinates
+          );
 
         this.ctx.beginPath();
         this.ctx.lineCap = "butt";
         this.ctx.lineJoin = "miter";
         this.ctx.moveTo(
           coordinates.x +
-            perpendicularDirection.x *
-              (this.style.sameDirectionLineLength / -2),
+            normalizedPerpendicularVector.x *
+              this.style.sameDirectionLineLength,
           coordinates.y +
-            perpendicularDirection.y * (this.style.sameDirectionLineLength / -2)
+            normalizedPerpendicularVector.y * this.style.sameDirectionLineLength
         );
         this.ctx.lineTo(
-          coordinates.x +
-            perpendicularDirection.x * (this.style.sameDirectionLineLength / 2),
-          coordinates.y +
-            perpendicularDirection.y * (this.style.sameDirectionLineLength / 2)
+          coordinates.x -
+            normalizedPerpendicularVector.x *
+              this.style.sameDirectionLineLength,
+          coordinates.y -
+            normalizedPerpendicularVector.y * this.style.sameDirectionLineLength
         );
         this.ctx.stroke();
         this.ctx.closePath();
@@ -248,10 +252,9 @@ export class Glyph {
       }
 
       if (
-        Helpers.isOppositiveDirection(
-          direction,
-          this.digitsDirections[index - 1]
-        )
+        this.digitsDirections.slice(0, index).some((dd) => {
+          return Helpers.isOppositiveDirection(direction, dd);
+        })
       ) {
         const coordinates = this.getNumberCoordinate(this.digitsArray[index]);
         const endCoordinates = this.getNumberCoordinate(
@@ -259,7 +262,7 @@ export class Glyph {
         );
 
         const xOffset = direction.y !== 0 ? 10 * direction.y : 0;
-        const yOffset = xOffset === 0 ? 10 * direction.x : 0;
+        const yOffset = xOffset === 0 ? -10 * direction.x : 0;
 
         this.ctx.beginPath();
         this.ctx.moveTo(coordinates.x + xOffset, coordinates.y + yOffset);
@@ -288,10 +291,27 @@ export class Glyph {
       this.ctx.fillStyle = this.style.helpCircleFillStyle;
       this.ctx.fill();
     }
+
+    // Draw 0 circle
+    const x = this.startCoordinates.x + this.blockWidth + this.blockWidth / 2;
+    const y =
+      this.startCoordinates.y + this.blockHeight * 3 + this.blockHeight / 2;
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, this.style.helpCircleRadius, 0, 2 * Math.PI);
+    this.ctx.fillStyle = this.style.helpCircleFillStyle;
+    this.ctx.fill();
   }
 
   private getNumberCoordinate(num: number): Coordinates {
     const yIndex = Helpers.lerp(num, 1, 9, 8, 0);
+
+    if (num === 0) {
+      return {
+        x: this.startCoordinates.x + this.blockWidth + this.blockWidth / 2,
+        y:
+          this.startCoordinates.y + this.blockHeight * 3 + this.blockHeight / 2,
+      };
+    }
 
     return {
       x:
@@ -318,13 +338,20 @@ export class Glyph {
     } as DirectionVector;
   }
 
-  private getStartCircleCoordinates(
-    firstCoord: Coordinates,
-    secondCoord: Coordinates
-  ): Coordinates {
+  private getStartCircleCoordinates(): Coordinates {
+    const firstCoord = this.digitsCoordinates[0];
+    const secondCoord =
+      this.digitsCoordinates.find((coord) => {
+        return !Helpers.areCoordinatesEqual(firstCoord, coord);
+      }) ?? this.digitsCoordinates[1];
+
+    const vector = Helpers.normalizeVector(
+      Helpers.getVector(firstCoord, secondCoord)
+    );
+
     return {
-      x: firstCoord.x + Math.sign(firstCoord.x - secondCoord.x) * 10,
-      y: firstCoord.y + Math.sign(firstCoord.y - secondCoord.y) * 10,
+      x: firstCoord.x + vector.x * this.style.sameDirectionLineLength * -1,
+      y: firstCoord.y + vector.y * this.style.sameDirectionLineLength * -1,
     };
   }
 }

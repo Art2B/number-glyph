@@ -8,7 +8,14 @@
   </head>
   <body>
     <h1 id="title">Number glyph</h1>
-    <canvas height="300" width="600" id="canvas"></canvas>
-    <script type="module" src="app.js"></script>
+    <input
+      id="number-input"
+      type="text"
+      pattern="[0-9]{4}"
+      placeholder="XXXX"
+      aria-label="4-digit number"
+    />
+    <canvas height="300" width="200" id="canvas"></canvas>
+    <script type="module" src="app.ts"></script>
   </body>
 </html>
